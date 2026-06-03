@@ -1,234 +1,456 @@
- # 📌 **Vision-Guided Adaptive Grasp Decision Making for Aerial Manipulation**
+# DG²-RL: Disturbance-Guided Grasp Decision Reinforcement Learning
 
-### DG²-RL: Disturbance-Guided Grasp Decision Reinforcement Learning
+## Overview
 
-A real-time hierarchical reinforcement learning framework for disturbance-aware robotic grasp decision making under dynamic conditions.
+DG²-RL (Disturbance-Guided Grasp Decision Reinforcement Learning) is a hierarchical robotic grasping framework that combines visual grasp prediction, disturbance-aware state estimation, and PPO-based reinforcement learning for robust grasp execution under uncertainty.
 
----
+The system is designed for aerial and mobile robotic manipulation scenarios where environmental disturbances, target motion, and perception uncertainty can significantly degrade grasp reliability.
 
-# Overview
+The deployment platform consists of:
 
-DG²-RL is a disturbance-aware robotic grasping framework designed for real-time autonomous grasp execution under unstable environmental conditions such as:
-
-* aerial manipulation
-* drone-based grasping
-* moving targets
-* vibration disturbances
-* unstable camera motion
-* uncertain grasp predictions
-
-The framework combines:
-
-1. Multi-grasp prediction network
-2. Disturbance estimation and temporal stability reasoning
-3. PPO-based hierarchical reinforcement learning policy
-4. Hardware-triggered grasp execution
-
-The system performs real-time perception, disturbance reasoning, action selection, and physical actuation using a servo-driven grasp execution pipeline.
+* Raspberry Pi
+* Pi Camera
+* Arduino Nano
+* L298N Motor Driver
+* N20 DC Motor / Linear Actuator
+* PPO-based Meta Decision Controller
 
 ---
 
-# Pipeline Architecture
+# System Architecture
 
 ```text
-RGB Camera
-     ↓
-Module 1: Multi-Grasp Prediction
-     ↓
-Module 2: Disturbance & Temporal Estimation
-     ↓
-DG²-RL PPO Meta-Decision Policy
-     ↓
+Pi Camera
+    │
+    ▼
+Module 1
+Uncertainty-Aware Grasp Prediction
+    │
+    ▼
+Top-K Grasp Proposals
+    │
+    ▼
+Module 2
+Disturbance-Aware State Estimation
+    │
+    ▼
+10D State Vector
+    │
+    ▼
+Module 3
+PPO Meta Decision Policy
+    │
+    ▼
 Action Selection
-(WAIT / TRACK / REPOSITION / EXECUTE / ABORT)
-     ↓
-Hardware Execution
-(Arduino + PCA9685 + Servo)
+
+WAIT
+TRACK
+REPOSITION
+EXECUTE
+ABORT
+
+    │
+    ▼
+Arduino Nano
+    │
+    ▼
+L298N Motor Driver
+    │
+    ▼
+Motor / Linear Actuator
 ```
 
 ---
 
-# Key Features
-
-* Real-time grasp prediction
-* Disturbance-aware reinforcement learning
-* Temporal stability modeling
-* Optical-flow-based motion estimation
-* Hardware-in-the-loop execution
-* PPO-based hierarchical control
-* Safety-aware execution logic
-* Object-aware policy gating
-* Servo-triggered physical execution
-* Live HUD telemetry visualization
-
----
-
-# Action Space
-
-The DG²-RL policy operates over five high-level actions:
-
-| Action     | Description             |
-| ---------- | ----------------------- |
-| WAIT       | Wait for stabilization  |
-| TRACK      | Track moving target     |
-| REPOSITION | Adjust alignment        |
-| EXECUTE    | Trigger grasp execution |
-| ABORT      | Abort unsafe grasp      |
-
----
-
-# State Representation
-
-The PPO policy receives a 10D disturbance-aware state vector:
-
-| Feature   | Description              |
-| --------- | ------------------------ |
-| q_max     | Maximum grasp confidence |
-| sigma_max | Grasp uncertainty        |
-| A_t       | Disturbance amplitude    |
-| f_t       | Disturbance frequency    |
-| e_p       | Positional error         |
-| ep_dot    | Positional error rate    |
-| S_t       | Temporal stability       |
-| delta_q   | Confidence variation     |
-| v_d       | Drone/camera velocity    |
-| omega     | Motion direction         |
-
----
-
-# Hardware Stack
-
-## Controller
-
-* Arduino UNO R4 Minima
-
-## Servo Driver
-
-* PCA9685 PWM Servo Driver
-
-## Actuator
-
-* Servo motor (connected to PCA9685 Channel 15)
-
-## Sensor
-
-* USB webcam
-
----
-
-# Software Stack
-
-* Python
-* PyTorch
-* OpenCV
-* NumPy
-* Arduino
-* PPO Reinforcement Learning
-* PCA9685 Servo Control
-
----
-
-# Real-Time Features
-
-The system supports:
-
-* live webcam inference
-* dynamic action selection
-* real-time HUD overlays
-* servo-triggered execution
-* reward monitoring
-* temporal stability tracking
-* policy debugging
-
----
-
-# Experimental Results
-
-The framework demonstrates:
-
-* stable temporal reasoning
-* disturbance-aware decision making
-* successful hardware-triggered execution
-* conservative safety-oriented policy behavior
-* successful PPO integration
-
-Example metrics from live testing:
-
-| Metric               | Value  |
-| -------------------- | ------ |
-| Avg Reward           | 1.343  |
-| Max Reward           | 16.851 |
-| Avg Confidence       | 0.320  |
-| Avg Stability        | 0.775  |
-| Execute Success Rate | 100%   |
-
----
-
-# Observed Policy Behavior
-
-The learned policy exhibits:
-
-* WAIT dominance during unstable conditions
-* TRACK during motion disturbances
-* EXECUTE during stable high-confidence states
-* ABORT during unsafe conditions
-
-This demonstrates meaningful disturbance-aware policy learning rather than random action selection.
-
----
-
-# Hardware Execution Proof
-
-The complete robotic execution pipeline was validated:
+# Project Structure
 
 ```text
-DG²-RL Policy
-    ↓
-Serial Communication
-    ↓
-Arduino Controller
-    ↓
-PCA9685 Driver
-    ↓
-Servo Actuation
+DG2RL/
+
+│
+├── main.py
+│
+├── config/
+│   └── config.py
+│
+├── models/
+│   ├── grasp_net.py
+│   └── ppo_network.py
+│
+├── perception/
+│   ├── module1_inference.py
+│   ├── grasp_extraction.py
+│   ├── objectness.py
+│   └── state_builder.py
+│
+├── motion/
+│   ├── disturbance.py
+│   ├── optical_flow.py
+│   └── temporal_features.py
+│
+├── rl/
+│   ├── environment.py
+│   ├── rollout_buffer.py
+│   └── ppo_agent.py
+│
+├── hardware/
+│   ├── arduino_controller.py
+│   └── execution.py
+│
+├── visualization/
+│   ├── hud.py
+│   ├── debug.py
+│   └── metrics.py
+│
+├── checkpoints/
+│   ├── dg2_graspnet_model.pth
+│   └── dg2rl_ppo_policy.pth
+│
+└── README.md
 ```
 
-Real-time EXECUTE actions successfully triggered physical servo motion.
+---
+
+# Module 1: Multi-Grasp Prediction
+
+## Objective
+
+Generate multiple grasp proposals from RGB-D observations.
+
+## Inputs
+
+* RGB image
+* Depth image
+
+## Network Outputs
+
+* Grasp Quality Map (Q)
+* Cosine Map
+* Sine Map
+* Grasp Width Map
+
+## Output
+
+Top-K grasp candidates:
+
+```python
+{
+    "x": x,
+    "y": y,
+    "angle": theta,
+    "width": width,
+    "score": confidence
+}
+```
 
 ---
 
-# Current Limitations
+# Module 2: Disturbance-Aware State Estimation
 
-* Webcam-only depth approximation
-* Limited object-awareness under empty scenes
-* No real aerial deployment yet
-* Disturbance frequency normalization requires further calibration
+## Objective
+
+Convert visual observations into a compact RL state representation.
+
+## Features
+
+### Grasp Features
+
+* Maximum confidence
+* Confidence uncertainty
+
+### Disturbance Features
+
+* Disturbance amplitude
+* Disturbance frequency
+
+### Motion Features
+
+* Optical flow velocity
+* Positional error
+
+### Temporal Features
+
+* Stability score
+* Confidence change
+* Error rate
+
+---
+
+## Final State Vector
+
+```text
+State =
+
+[
+ q_max,
+ sigma_max,
+
+ A_t,
+ f_t,
+
+ e_p,
+ ep_dot,
+
+ S_t,
+ delta_q,
+
+ v_d,
+ omega_sin
+]
+```
+
+State Dimension = 10
 
 ---
 
-# Research Contributions
+# Module 3: PPO Meta-Decision Policy
 
-DG²-RL introduces:
+## Action Space
 
-* disturbance-guided hierarchical RL for grasping
-* temporal stability-aware execution intelligence
-* uncertainty-aware meta-decision control
-* real-time hardware-integrated RL grasp execution
+```text
+0 → WAIT
+
+1 → TRACK
+
+2 → REPOSITION
+
+3 → EXECUTE
+
+4 → ABORT
+```
+
+---
+
+## PPO Network
+
+### Shared Encoder
+
+```text
+10
+ ↓
+128
+ ↓
+128
+```
+
+### Policy Head
+
+```text
+128 → 5
+```
+
+### Value Head
+
+```text
+128 → 1
+```
+
+---
+
+# Reward Design
+
+## WAIT
+
+Encouraged during:
+
+* High disturbance
+* High uncertainty
+* Low stability
+
+---
+
+## TRACK
+
+Encouraged during:
+
+* Small positional errors
+
+---
+
+## REPOSITION
+
+Encouraged during:
+
+* Large positional errors
+
+---
+
+## EXECUTE
+
+Encouraged during:
+
+* High confidence
+* Low uncertainty
+* Low disturbance
+* High stability
+
+---
+
+## ABORT
+
+Encouraged during:
+
+* Catastrophic conditions
+* Unsafe grasp situations
+
+---
+
+# Hardware Integration
+
+## Raspberry Pi
+
+Responsibilities:
+
+* Camera acquisition
+* State estimation
+* PPO inference
+
+---
+
+## Arduino Nano
+
+Responsibilities:
+
+* Motor control
+* Actuator triggering
+
+Communication:
+
+```text
+Serial 9600 baud
+```
+
+Commands:
+
+```text
+'1' → EXECUTE
+
+'0' → STOP
+```
+
+---
+
+# L298N Connections
+
+## Arduino
+
+```text
+D8 → IN1
+
+D9 → IN2
+```
+
+## Motor
+
+```text
+OUT1 → Motor Terminal 1
+
+OUT2 → Motor Terminal 2
+```
+
+## Power
+
+```text
+External Supply → L298N
+
+Common Ground → Arduino
+```
+
+---
+
+# Real-Time Deployment Pipeline
+
+```text
+Capture Frame
+      ↓
+Module 1
+      ↓
+Extract Grasps
+      ↓
+Compute Objectness
+      ↓
+Build State Vector
+      ↓
+PPO Policy
+      ↓
+Decision
+
+WAIT
+TRACK
+REPOSITION
+EXECUTE
+ABORT
+
+      ↓
+Safety Gate
+      ↓
+Arduino Serial
+      ↓
+Motor Trigger
+```
+
+---
+
+# Safety Mechanisms
+
+## Objectness Gating
+
+Prevents actions when no object is visible.
+
+---
+
+## Execute Safety Gate
+
+Execute only when:
+
+```text
+Confidence High
+
+Uncertainty Low
+
+Disturbance Low
+
+Stability High
+```
+
+---
+
+## Hardware Execution Control
+
+Motor activates only during:
+
+```text
+ACTION = EXECUTE
+```
+
+Motor stops immediately when action changes.
+
+---
+
+# Current Deployment Status
+
+## Completed
+
+* Module 1 Training
+* Module 2 State Estimation
+* Module 3 PPO Policy
+* Raspberry Pi Deployment
+* Pi Camera Integration
+* Arduino Integration
+* Serial Communication
+* L298N Control
+* Motor Triggering
+* Execute Safety Gating
+* Real-Time HUD
 
 
 ---
 
-# License
+# Author
 
-MIT License
+Arnav Karnik
 
----
+MIT Manipal → IIT Jodhpur Internship Project
 
-# Acknowledgements
+DG²-RL: Disturbance-Guided Grasp Decision Reinforcement Learning
 
-Developed as part of research work involving:
-
-* IIT Jodhpur
-* Manipal Institute of Technology
-
----
